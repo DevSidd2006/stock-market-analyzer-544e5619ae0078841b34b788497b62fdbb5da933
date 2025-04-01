@@ -14,6 +14,7 @@ load_dotenv()
 
 # Use environment variables
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+ALPHA_VANTAGE_API_KEY = "016ZW80FI5QY6PCI"  # Added Alpha Vantage API key
 DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "en")
 DEFAULT_NUM_ARTICLES = int(os.getenv("DEFAULT_NUM_ARTICLES", 5))
 
