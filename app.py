@@ -8,6 +8,8 @@ import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import yfinance as yf
 import requests
+import csv
+from io import StringIO
 
 # Load environment variables
 load_dotenv()
@@ -890,6 +892,23 @@ def fetch_company_news(ticker):
 def home():
     return render_template("index.html")
 
+def fetch_alpha_vantage_data(ticker):
+    """
+    Fetch company overview data from the Alpha Vantage API.
+    Returns a dictionary with the data or an error message.
+    """
+    try:
+        url = f"https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={ALPHA_VANTAGE_API_KEY}"
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        # If the API returns a note or an error message, handle it as an error.
+        if not data or "Note" in data or "Error Message" in data:
+            return {"status": "error", "message": "Alpha Vantage API returned no data or an error."}
+        return {"status": "success", "data": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.route("/analyze", methods=['POST'])
 def analyze():
     try:
@@ -910,9 +929,13 @@ def analyze():
         news_articles = fetch_company_news(ticker)
         results['news_articles'] = news_articles
         
-        # Add fundamental metrics
+        # Add fundamental metrics from Yahoo Finance
         fundamental_metrics = get_fundamental_metrics(ticker)
         results['fundamental_metrics'] = fundamental_metrics
+
+        # Fetch additional data from Alpha Vantage and add to results 
+        alpha_vantage_data = fetch_alpha_vantage_data(ticker)
+        results['alpha_vantage_data'] = alpha_vantage_data
         
         # Ensure all required sections exist with proper structure
         if ('price_trends' not in results):
@@ -1043,7 +1066,7 @@ def calculate_returns_analysis(ticker):
         return {'status': 'error', 'message': str(e)}
 
 def get_fundamental_metrics(ticker):
-    """Fetch fundamental metrics for the stock"""
+    """Fetch fundamental metrics for the stock using Yahoo Finance."""
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -1093,6 +1116,36 @@ def get_fundamental_metrics(ticker):
             "status": "error",
             "message": f"Error fetching fundamental metrics: {str(e)}"
         }
+
+def fetch_all_stocks():
+    """
+    Fetch all active stock listings using the Alpha Vantage API.
+    Returns a list of dictionaries containing stock symbols and names.
+    """
+    try:
+        url = f"https://www.alphavantage.co/query?function=LISTING_STATUS&apikey={ALPHA_VANTAGE_API_KEY}"
+        response = requests.get(url)
+        response.raise_for_status()
+        csv_text = response.text
+        reader = csv.DictReader(StringIO(csv_text))
+        stocks = []
+        for row in reader:
+            # Only include active listings
+            if row.get("status", "").lower() == "active":
+                stocks.append({
+                    "symbol": row.get("symbol"),
+                    "name": row.get("name")
+                })
+        return stocks
+    except Exception as e:
+        print(f"Error fetching stock listings: {str(e)}")
+        return []
+
+@app.route("/all_stocks")
+def all_stocks():
+    """Display all stocks fetched via Alpha Vantage API."""
+    stocks = fetch_all_stocks()
+    return render_template("all_stocks.html", stocks=stocks)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
