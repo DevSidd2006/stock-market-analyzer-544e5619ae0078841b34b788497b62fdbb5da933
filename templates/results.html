@@ -4,1619 +4,521 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Analysis Results</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
         body {
-            background: #f0f2f5;
-            padding: 30px;
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        .container-fluid {
+            padding: 20px;
         }
-
-        .header {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .stock-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .stock-title {
-            font-size: 2.5em;
-            color: #1e3c72;
-            margin-bottom: 10px;
-        }
-
-        .price-info {
-            text-align: right;
-        }
-
-        .current-price {
-            font-size: 2em;
-            color: #2a5298;
-            margin-bottom: 5px;
-        }
-
-        .price-change {
-            font-size: 1.2em;
-        }
-
-        .positive { color: #00c853; }
-        .negative { color: #d50000; }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
         .card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            color: #1e3c72;
-            font-size: 1.2em;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f2f5;
-        }
-
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .recommendation-badge {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 30px;
-            color: white;
-            font-weight: 500;
-            margin: 20px 0;
-        }
-
-        .Strong.Buy { background: #00c853; }
-        .Buy { background: #64dd17; }
-        .Hold { background: #ffd600; }
-        .Sell { background: #ff3d00; }
-        .Strong.Sell { background: #d50000; }
-
-        .chart-container {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-
-        .chart-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .period-selector {
-            display: flex;
-            gap: 10px;
-            background: #f8f9fa;
-            padding: 5px;
-            border-radius: 8px;
-        }
-
-        .period-button {
-            padding: 8px 16px;
             border: none;
-            border-radius: 6px;
-            background: none;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .period-button:hover {
-            color: #1e3c72;
-        }
-
-        .period-button.active {
-            background: #1e3c72;
-            color: white;
-        }
-
-        .return-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .date-range {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .return-details {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .price-change {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            font-size: 0.9em;
-        }
-
-        .price-change span {
-            color: #666;
-        }
-
-        .return-badge {
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 500;
-        }
-
-        .return-badge.positive {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .return-badge.negative {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .back-button {
-            display: inline-block;
-            padding: 12px 25px;
-            background: #1e3c72;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .back-button:hover {
-            background: #2a5298;
-            transform: translateY(-2px);
-        }
-
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .news-section {
-            width: 100%;
-            background: #f8f9fa;
-            padding: 40px 0;
-            margin-top: 40px;
-        }
-
-        .section-header {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 30px;
-            margin-bottom: 30px;
-        }
-
-        .section-header h2 {
-            font-size: 2em;
-            color: #1e3c72;
-            margin: 0;
-        }
-
-        .news-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 30px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-            gap: 30px;
-        }
-
-        .news-article {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .news-article:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .news-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .news-meta {
-            display: flex;
-            gap: 15px;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .news-source {
-            font-weight: 500;
-            color: #1e3c72;
-        }
-
-        .sentiment-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 500;
-        }
-
-        .news-content {
-            display: flex;
-            gap: 20px;
-        }
-
-        .news-image {
-            width: 200px;
-            height: 140px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .news-text {
-            flex: 1;
-        }
-
-        .news-title {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .news-title a {
-            color: #1e3c72;
-            text-decoration: none;
-        }
-
-        .news-title a:hover {
-            text-decoration: underline;
-        }
-
-        .news-description {
-            color: #444;
-            font-size: 0.95em;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            .news-container {
-                grid-template-columns: 1fr;
-                padding: 0 20px;
-            }
-
-            .news-content {
-                flex-direction: column;
-            }
-
-            .news-image {
-                width: 100%;
-                height: 200px;
-            }
-
-            .section-header {
-                padding: 0 20px;
-            }
-
-            .section-header h2 {
-                font-size: 1.8em;
-            }
-        }
-
-        .metric-description {
-            font-size: 0.8em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .metric-value {
-            font-weight: 500;
-        }
-
-        .metric {
-            position: relative;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .metric:hover {
-            background: #f0f2f5;
-        }
-
-        .metric span:first-child {
-            color: #1e3c72;
-        }
-
-        .returns-analysis {
-            margin-bottom: 30px;
-        }
-
-        .time-periods {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .time-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 20px;
-            background: #f0f2f5;
-            color: #1e3c72;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .time-btn.active {
-            background: #1e3c72;
-            color: white;
-        }
-
-        .period-returns {
-            display: none;
-        }
-
-        .period-returns.active {
-            display: block;
-        }
-
-        .return-metric {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 10px;
-        }
-
-        .return-value {
-            font-weight: 500;
-            font-size: 1.1em;
-        }
-
-        .returns-chart {
-            height: 300px;
-            margin-top: 20px;
-        }
-
-        .volatility {
-            color: #666;
-        }
-
-        .today-performance {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .today-performance h3 {
-            color: #1e3c72;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-
-        .daily-metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .daily-return, .daily-change {
-            padding: 15px;
-            border-radius: 8px;
-            background: white;
-            text-align: center;
-        }
-
-        .metric-label {
-            color: #666;
-            margin-bottom: 5px;
-            font-size: 0.9em;
-        }
-
-        .metric-value {
-            font-size: 1.4em;
-            font-weight: 600;
-        }
-
-        .positive .metric-value {
-            color: #27ae60;
-        }
-
-        .negative .metric-value {
-            color: #e74c3c;
-        }
-
-        .time-periods {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        .time-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 20px;
-            background: #f0f2f5;
-            color: #1e3c72;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9em;
-        }
-
-        .time-btn:hover {
-            background: #e1e5ea;
-        }
-
-        .time-btn.active {
-            background: #1e3c72;
-            color: white;
-        }
-
-        .tab-container {
-            margin: 30px 0;
-            background: white;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .tabs {
-            display: flex;
-            background: #f8f9fa;
-            border-bottom: 2px solid #eee;
-        }
-
-        .tab-button {
-            padding: 15px 25px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 1.1em;
-            color: #666;
-            transition: all 0.3s ease;
-        }
-
-        .tab-button:hover {
-            color: #1e3c72;
-        }
-
-        .tab-button.active {
-            color: #1e3c72;
-            border-bottom: 3px solid #1e3c72;
-            font-weight: 500;
-        }
-
-        .tab-content {
-            display: none;
-            padding: 25px;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .company-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .company-metric {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
-        }
-
-        .company-metric h4 {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .company-metric p {
-            color: #1e3c72;
-            font-size: 1.1em;
-            font-weight: 500;
-        }
-
-        .company-description {
-            line-height: 1.6;
-            color: #444;
-            margin: 20px 0;
-        }
-
-        .pros-cons-section {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin: 30px 0;
-        }
-
-        .pros-cons-title {
-            color: #1e3c72;
-            font-size: 1.5em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f2f5;
         }
-
-        .pros-cons-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-        }
-
-        .pros-cons-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            height: 100%;
-        }
-
-        .pros-cons-card h3 {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #1e3c72;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-        }
-
-        .pros-cons-card.pros h3 {
-            color: #2e7d32;
-        }
-
-        .pros-cons-card.cons h3 {
-            color: #c62828;
-        }
-
-        .pros-cons-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .pros-cons-list li {
-            position: relative;
-            padding: 10px 0 10px 25px;
+        .card-header {
+            background-color: #ffffff;
             border-bottom: 1px solid #e9ecef;
-            line-height: 1.4;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            padding: 1.5rem;
         }
-
-        .pros-cons-list li:last-child {
+        .card-title {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        .nav-pills .nav-link {
+            color: #34495e;
+            border-radius: 10px;
+            padding: 10px 20px;
+            margin: 5px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .recommendation-badge {
+            font-size: 1.1rem;
+            padding: 8px 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .Strong.Buy { background-color: #28a745; color: white; }
+        .Buy { background-color: #218838; color: white; }
+        .Hold { background-color: #ffc107; color: #343a40; }
+        .Sell { background-color: #dc3545; color: white; }
+        .Strong.Sell { background-color: #c82333; color: white; }
+        .price-change.positive { color: #28a745; }
+        .price-change.negative { color: #dc3545; }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e9ecef;
+        }
+        .metric-item:last-child {
             border-bottom: none;
         }
-
-        .pros-cons-list li::before {
-            content: "";
-            position: absolute;
-            left: 0;
-            top: 15px;
-            width: 16px;
-            height: 16px;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
+        .metric-label {
+            font-weight: 500;
+            color: #555;
         }
-
-        .pros-list li::before {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232e7d32'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
+        .metric-value {
+            font-weight: 600;
+            color: #2c3e50;
         }
-
-        .cons-list li::before {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23c62828'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z'/%3E%3C/svg%3E");
-        }
-
-        .news-container {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
         .news-article {
-            background: #f8f9fa;
+            background-color: #ffffff;
             border-radius: 10px;
             padding: 15px;
-            transition: transform 0.2s;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease-in-out;
         }
-
         .news-article:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
         }
-
-        .news-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .news-meta {
-            display: flex;
-            gap: 15px;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .news-source {
-            font-weight: 500;
-        }
-
-        .sentiment-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            font-weight: 500;
-        }
-
-        .sentiment-badge.positive {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .sentiment-badge.negative {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .sentiment-badge.neutral {
-            background: #f5f5f5;
-            color: #616161;
-        }
-
-        .news-content {
-            display: flex;
-            gap: 15px;
-        }
-
-        .news-image {
-            width: 200px;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .news-text {
-            flex: 1;
-        }
-
-        .news-title {
-            font-size: 1.1em;
-            margin-bottom: 8px;
-        }
-
         .news-title a {
-            color: #1e3c72;
+            color: #007bff;
             text-decoration: none;
+            font-weight: 600;
         }
-
         .news-title a:hover {
             text-decoration: underline;
         }
-
-        .news-description {
-            color: #444;
-            font-size: 0.95em;
-            line-height: 1.5;
+        .news-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 10px;
         }
-
-        @media (max-width: 768px) {
-            .news-content {
-                flex-direction: column;
-            }
-
-            .news-image {
-                width: 100%;
-                height: 180px;
-            }
+        .sentiment-badge {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        .sentiment-badge.positive { background-color: #d4edda; color: #155724; }
+        .sentiment-badge.negative { background-color: #f8d7da; color: #721c24; }
+        .sentiment-badge.neutral { background-color: #e2e3e5; color: #383d41; }
+        .pros-list li::before { content: '✅'; margin-right: 8px; }
+        .cons-list li::before { content: '❌'; margin-right: 8px; }
+        .pros-list, .cons-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .pros-list li, .cons-list li {
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+        .chart-container {
+            height: 350px;
+            width: 100%;
+        }
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 50px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid">
         {% if results.get('status') == 'error' %}
-            <div class="error">
+            <div class="error-message">
                 <h2>Error</h2>
                 <p>{{ results.get('message') }}</p>
-                <a href="/" class="back-button">Try Again</a>
+                <a href="/" class="btn btn-primary mt-3">Analyze Another Stock</a>
             </div>
         {% else %}
-            <div class="header">
-                <div class="stock-info">
-                    <div>
-                        <h1 class="stock-title">{{ results.get('ticker', '').split('.')[0] }}</h1>
-                        {% if results.get('recommendation') %}
-                        <div class="recommendation-badge {{ results['recommendation']['recommendation'].replace(' ', '.') }}">
-                            {{ results['recommendation']['recommendation'] }}
-                            ({{ "%.1f"|format(results['recommendation']['confidence']) }}% Confidence)
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="card-title">{{ results.get('ticker', '').split('.')[0] }}</h1>
+                            {% if results.get('recommendation') %}
+                                <span class="recommendation-badge {{ results['recommendation']['recommendation'].replace(' ', '.') }}">
+                                    {{ results['recommendation']['recommendation'] }}
+                                    ({{ "%.1f"|format(results['recommendation']['confidence']) }}% Confidence)
+                                </span>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                    </div>
-                    {% if results.get('price_trends', {}).get('status') == 'success' %}
-                    <div class="price-info">
-                        <div class="current-price">₹{{ "%.2f"|format(results['price_trends']['current_price']) }}</div>
-                        <div class="price-change {{ 'positive' if results['price_trends']['total_return'] > 0 else 'negative' }}">
-                            {{ "%.2f"|format(results['price_trends']['total_return'] * 100) }}%
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            {% if results.get('company_details', {}).get('status') == 'success' %}
-            <div class="tab-container">
-                <div class="tabs">
-                    <button class="tab-button active" onclick="openTab(event, 'overview')">Company Overview</button>
-                    <button class="tab-button" onclick="openTab(event, 'financial')">Financial Details</button>
-                    <button class="tab-button" onclick="openTab(event, 'market')">Market Data</button>
-                </div>
-
-                <!-- Overview Tab -->
-                <div id="overview" class="tab-content active">
-                    <div class="company-description">
-                        {{ results.get('company_details', {}).get('details', {}).get('description', 'No description available.') }}
-                    </div>
-                    <div class="company-grid">
-                        <div class="company-metric">
-                            <h4>Sector</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('sector', 'N/A') }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Industry</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('industry', 'N/A') }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Employees</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('employees', 'N/A') }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Website</h4>
-                            <p><a href="{{ results.get('company_details', {}).get('details', {}).get('website', '#') }}" target="_blank">Visit Website</a></p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Financial Details Tab -->
-                <div id="financial" class="tab-content">
-                    <div class="company-grid">
-                        <div class="company-metric">
-                            <h4>Market Cap</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('market_cap')|format_market_cap }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>P/E Ratio</h4>
-                            <p>{{ '{:.2f}'.format(results.get('company_details', {}).get('details', {}).get('pe_ratio', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>EPS (TTM)</h4>
-                            <p>₹{{ '{:.2f}'.format(results.get('company_details', {}).get('details', {}).get('eps', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Book Value</h4>
-                            <p>₹{{ '{:.2f}'.format(results.get('company_details', {}).get('details', {}).get('book_value', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Dividend Yield</h4>
-                            <p>{{ '{:.2f}%'.format(results.get('company_details', {}).get('details', {}).get('dividend_yield', 0) * 100) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Profit Margin</h4>
-                            <p>{{ '{:.2f}%'.format(results.get('company_details', {}).get('details', {}).get('profit_margin', 0) * 100) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Revenue Growth</h4>
-                            <p>{{ '{:.2f}%'.format(results.get('company_details', {}).get('details', {}).get('revenue_growth', 0) * 100) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Debt to Equity</h4>
-                            <p>{{ '{:.2f}'.format(results.get('company_details', {}).get('details', {}).get('debt_to_equity', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Return on Equity</h4>
-                            <p>{{ '{:.2f}%'.format(results.get('company_details', {}).get('details', {}).get('return_on_equity', 0) * 100) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Beta</h4>
-                            <p>{{ '{:.2f}'.format(results.get('company_details', {}).get('details', {}).get('beta', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Currency</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('currency', 'N/A') }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Average Volume</h4>
-                            <p>{{ '{:,.0f}'.format(results.get('company_details', {}).get('details', {}).get('avg_volume', 0)) }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Market Data Tab -->
-                <div id="market" class="tab-content">
-                    <div class="company-grid">
-                        <div class="company-metric">
-                            <h4>Exchange</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('exchange', 'N/A') }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>52 Week High</h4>
-                            <p>₹{{ '{:,.2f}'.format(results.get('company_details', {}).get('details', {}).get('52_week_high', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>52 Week Low</h4>
-                            <p>₹{{ '{:,.2f}'.format(results.get('company_details', {}).get('details', {}).get('52_week_low', 0)) }}</p>
-                        </div>
-                        <div class="company-metric">
-                            <h4>Market Rank</h4>
-                            <p>{{ results.get('company_details', {}).get('details', {}).get('market_rank', 'N/A') }}</p>
+                        <div class="col-md-4 text-end">
+                            {% if results.get('price_trends', {}).get('status') == 'success' %}
+                                <h2 class="mb-0">₹{{ "%.2f"|format(results['price_trends']['current_price']) }}</h2>
+                                <p class="lead price-change {{ 'positive' if results['price_trends']['total_return'] > 0 else 'negative' }}">
+                                    {{ "%.2f"|format(results['price_trends']['total_return'] * 100) }}%
+                                </p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            {% endif %}
 
-            {% if results.get('historical_data') %}
-            <div id="price-chart" class="chart-container"></div>
-            {% endif %}
-
-            {% if results.get('historical_returns', {}).get('status') == 'success' %}
-            <div class="chart-container">
-                <div class="chart-controls">
-                    <div class="period-selector">
-                        <button class="period-button active" onclick="updateChart('1w')">1W</button>
-                        <button class="period-button" onclick="updateChart('1m')">1M</button>
-                        <button class="period-button" onclick="updateChart('1y')">1Y</button>
-                        <button class="period-button" onclick="updateChart('5y')">5Y</button>
-                        <button class="period-button" onclick="updateChart('10y')">10Y</button>
-                    </div>
-                    <div class="return-info">
-                        <div class="date-range" id="period-date-range"></div>
-                        <div class="return-details">
-                            <div class="current-period">Period Return:</div>
-                            <div id="period-return" class="return-badge">
-                                Loading...
-                            </div>
-                            <div class="price-change">
-                                <div>Start: <span id="start-price">-</span></div>
-                                <div>End: <span id="end-price">-</span></div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-pills card-header-pills" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="financials-tab" data-bs-toggle="tab" data-bs-target="#financials" type="button" role="tab" aria-controls="financials" aria-selected="false">Financials</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="technical-tab" data-bs-toggle="tab" data-bs-target="#technical" type="button" role="tab" aria-controls="technical" aria-selected="false">Technical Analysis</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="news-tab" data-bs-toggle="tab" data-bs-target="#news" type="button" role="tab" aria-controls="news" aria-selected="false">News & Sentiment</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="peers-tab" data-bs-toggle="tab" data-bs-target="#peers" type="button" role="tab" aria-controls="peers" aria-selected="false">Peer Comparison</button>
+                        </li>
+                    </ul>
                 </div>
-                <div id="stock-chart" style="height: 500px;"></div>
-            </div>
-            {% endif %}
-
-            <div class="grid">
-                <!-- Technical Analysis Card -->
-                {% if results.get('price_trends', {}).get('status') == 'success' %}
-                <div class="card">
-                    <h2 class="card-title">Technical Analysis</h2>
-                    <div class="metric">
-                        <span>Current Price</span>
-                        <span>₹{{ "%.2f"|format(results['price_trends']['current_price']) }}</span>
-                    </div>
-                    {% if results['price_trends'].get('rsi') %}
-                    <div class="metric">
-                        <span>RSI (14)</span>
-                        <span>{{ "%.1f"|format(results['price_trends']['rsi']) }}</span>
-                    </div>
-                    {% endif %}
-                    {% if results['price_trends'].get('bullish_trend') is not none %}
-                    <div class="metric">
-                        <span>Trend</span>
-                        <span class="{{ 'positive' if results['price_trends']['bullish_trend'] else 'negative' }}">
-                            {{ "Bullish" if results['price_trends']['bullish_trend'] else "Bearish" }}
-                        </span>
-                    </div>
-                    {% endif %}
-                </div>
-                {% endif %}
-
-                <!-- Fundamental Metrics Card with proper formatting -->
-                <div class="card">
-                    <h2 class="card-title">Fundamental Metrics</h2>
-                    {% if results.get('fundamental_metrics', {}).get('status') == 'success' %}
-                        {% set metrics = results.get('fundamental_metrics', {}).get('metrics', {}) %}
-                        
-                        <!-- Valuation Ratios -->
-                        <div class="metric-group">
-                            <h3>Valuation Ratios</h3>
-                            <div class="metric">
-                                <span>P/E Ratio</span>
-                                <span>{{ "%.2f"|format(metrics.pe_ratio) if metrics.pe_ratio else 'N/A' }}</span>
+                <div class="card-body">
+                    <div class="tab-content" id="myTabContent">
+                        <!-- Overview Tab Content -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                            <p>{{ results.get('company_details', {}).get('details', {}).get('longBusinessSummary', 'No description available.') }}</p>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h5>Key Information</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="metric-item"><span class="metric-label">Sector:</span> <span class="metric-value">{{ results.get('company_details', {}).get('details', {}).get('sector', 'N/A') }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Industry:</span> <span class="metric-value">{{ results.get('company_details', {}).get('details', {}).get('industry', 'N/A') }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Employees:</span> <span class="metric-value">{{ '{:,.0f}'.format(results.get('company_details', {}).get('details', {}).get('fullTimeEmployees', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Website:</span> <span class="metric-value"><a href="{{ results.get('company_details', {}).get('details', {}).get('website', '#') }}" target="_blank">Visit Site</a></span></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Market Snapshot</h5>
+                                    <ul class="list-unstyled">
+                                        <li class="metric-item"><span class="metric-label">Market Cap:</span> <span class="metric-value">{{ results.get('company_details', {}).get('details', {}).get('marketCap')|format_market_cap }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">52 Week High:</span> <span class="metric-value">₹{{ "%.2f"|format(results.get('company_details', {}).get('details', {}).get('fiftyTwoWeekHigh', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">52 Week Low:</span> <span class="metric-value">₹{{ "%.2f"|format(results.get('company_details', {}).get('details', {}).get('fiftyTwoWeekLow', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Avg. Volume:</span> <span class="metric-value">{{ '{:,.0f}'.format(results.get('company_details', {}).get('details', {}).get('averageVolume', 0)) }}</span></li>
+                                    </ul>
+                                </div>
                             </div>
-                            <div class="metric">
-                                <span>P/B Ratio</span>
-                                <span>{{ "%.2f"|format(metrics.pb_ratio) if metrics.pb_ratio else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>P/S Ratio</span>
-                                <span>{{ "%.2f"|format(metrics.ps_ratio) if metrics.ps_ratio else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>PEG Ratio</span>
-                                <span>{{ "%.2f"|format(metrics.peg_ratio) if metrics.peg_ratio else 'N/A' }}</span>
+                            <h5 class="mt-4">Investment Thesis</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Strengths</h6>
+                                    <ul class="pros-list">
+                                        {% for pro in results.get('pros_and_cons', {}).get('analysis', {}).get('pros', []) %}
+                                            <li>{{ pro }}</li>
+                                        {% endfor %}
+                                        {% if not results.get('pros_and_cons', {}).get('analysis', {}).get('pros', []) %}
+                                            <li>No significant strengths identified.</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Areas of Concern</h6>
+                                    <ul class="cons-list">
+                                        {% for con in results.get('pros_and_cons', {}).get('analysis', {}).get('cons', []) %}
+                                            <li>{{ con }}</li>
+                                        {% endfor %}
+                                        {% if not results.get('pros_and_cons', {}).get('analysis', {}).get('cons', []) %}
+                                            <li>No significant concerns identified.</li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Dividend & Earnings -->
-                        <div class="metric-group">
-                            <h3>Dividend & Earnings</h3>
-                            <div class="metric">
-                                <span>Dividend Yield</span>
-                                <span>{{ "%.2f%%"|format(metrics.dividend_yield) if metrics.dividend_yield else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Dividend Rate</span>
-                                <span>{{ "%.2f"|format(metrics.dividend_rate) if metrics.dividend_rate else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>EPS (TTM)</span>
-                                <span>{{ "%.2f"|format(metrics.eps) if metrics.eps else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Forward EPS</span>
-                                <span>{{ "%.2f"|format(metrics.forward_eps) if metrics.forward_eps else 'N/A' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Profitability -->
-                        <div class="metric-group">
-                            <h3>Profitability</h3>
-                            <div class="metric">
-                                <span>Return on Equity</span>
-                                <span>{{ "%.2f%%"|format(metrics.roe) if metrics.roe else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Gross Margin</span>
-                                <span>{{ "%.2f%%"|format(metrics.gross_margin) if metrics.gross_margin else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Operating Margin</span>
-                                <span>{{ "%.2f%%"|format(metrics.operating_margin) if metrics.operating_margin else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Net Margin</span>
-                                <span>{{ "%.2f%%"|format(metrics.net_margin) if metrics.net_margin else 'N/A' }}</span>
+                        <!-- Financials Tab Content -->
+                        <div class="tab-pane fade" id="financials" role="tabpanel" aria-labelledby="financials-tab">
+                            <h5>Key Financial Ratios</h5>
+                            <div class="row">
+                                {% set metrics = results.get('fundamental_metrics', {}).get('metrics', {}) %}
+                                {% for key, value in metrics.items() %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100 p-3">
+                                            <div class="metric-label">{{ key.replace('_', ' ').title() }}:</div>
+                                            <div class="metric-value">
+                                                {% if key in ['pe_ratio', 'pb_ratio', 'ps_ratio', 'peg_ratio', 'debt_to_equity', 'current_ratio'] %}
+                                                    {{ "%.2f"|format(value) if value is not none else 'N/A' }}
+                                                {% elif key in ['dividend_yield', 'roe', 'gross_margin', 'operating_margin', 'net_margin', 'revenue_growth', 'quarterly_revenue_growth'] %}
+                                                    {{ "%.2f%%"|format(value) if value is not none else 'N/A' }}
+                                                {% elif key in ['eps', 'free_cash_flow', 'operating_cash_flow', 'market_cap', 'enterprise_value'] %}
+                                                    {{ value|format_market_cap if value is not none else 'N/A' }}
+                                                {% else %}
+                                                    {{ value if value is not none else 'N/A' }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
                             </div>
                         </div>
 
-                        <!-- Growth -->
-                        <div class="metric-group">
-                            <h3>Growth</h3>
-                            <div class="metric">
-                                <span>Revenue Growth</span>
-                                <span>{{ "%.2f%%"|format(metrics.revenue_growth) if metrics.revenue_growth else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Earnings Growth</span>
-                                <span>{{ "%.2f%%"|format(metrics.earnings_growth) if metrics.earnings_growth else 'N/A' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Financial Health -->
-                        <div class="metric-group">
-                            <h3>Financial Health</h3>
-                            <div class="metric">
-                                <span>Debt to Equity</span>
-                                <span>{{ "%.2f"|format(metrics.debt_to_equity) if metrics.debt_to_equity else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Current Ratio</span>
-                                <span>{{ "%.2f"|format(metrics.current_ratio) if metrics.current_ratio else 'N/A' }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Market Data & Cash Flow -->
-                        <div class="metric-group">
-                            <h3>Market Data & Cash Flow</h3>
-                            <div class="metric">
-                                <span>Market Cap</span>
-                                <span>{{ metrics.market_cap|format_market_cap }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Enterprise Value</span>
-                                <span>{{ metrics.enterprise_value|format_market_cap }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Free Cash Flow</span>
-                                <span>{{ metrics.free_cash_flow|format_market_cap if metrics.free_cash_flow else 'N/A' }}</span>
-                            </div>
-                            <div class="metric">
-                                <span>Operating Cash Flow</span>
-                                <span>{{ metrics.operating_cash_flow|format_market_cap if metrics.operating_cash_flow else 'N/A' }}</span>
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="metric">No fundamental metrics available</div>
-                    {% endif %}
-                </div>
-
-                <!-- Returns Analysis Card -->
-                <div class="card returns-analysis">
-                    <h2 class="card-title">Returns Analysis</h2>
-                    {% if results.get('returns_analysis', {}).get('status') == 'success' %}
-                        <!-- Today's Performance -->
-                        <div class="today-performance">
-                            <h3>Today's Performance</h3>
-                            <div class="daily-metrics">
-                                <div class="metric daily-return {{ 'positive' if results['returns_analysis']['one_day_return'] > 0 else 'negative' }}">
-                                    <div class="metric-label">Today's Return</div>
-                                    <div class="metric-value">
-                                        {{ "%.2f"|format(results['returns_analysis']['one_day_return'] * 100) }}%
+                        <!-- Technical Analysis Tab Content -->
+                        <div class="tab-pane fade" id="technical" role="tabpanel" aria-labelledby="technical-tab">
+                            <h5>Price Trends & Indicators</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card p-3">
+                                        <canvas id="priceChart" class="chart-container"></canvas>
                                     </div>
                                 </div>
-                                <div class="metric daily-change {{ 'positive' if results['returns_analysis']['one_day_change'] > 0 else 'negative' }}">
-                                    <div class="metric-label">Price Change</div>
-                                    <div class="metric-value">
-                                        ₹{{ "%.2f"|format(results['returns_analysis']['one_day_change']) }}
+                                <div class="col-md-6">
+                                    <div class="card p-3">
+                                        <canvas id="returnsChart" class="chart-container"></canvas>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Time Period Selector -->
-                        <div class="time-periods">
-                            <button class="time-btn active" onclick="showPeriod('daily')">Daily</button>
-                            <button class="time-btn" onclick="showPeriod('weekly')">Weekly</button>
-                            <button class="time-btn" onclick="showPeriod('monthly')">Monthly</button>
-                            <button class="time-btn" onclick="showPeriod('yearly')">Yearly</button>
-                        </div>
-
-                        <!-- Returns Display -->
-                        <div class="returns-container">
-                            <!-- Weekly Returns -->
-                            <div class="period-returns active" id="weekly-returns">
-                                <div class="return-metric">
-                                    <span>1 Week Return</span>
-                                    <span class="return-value {{ 'positive' if results['returns_analysis']['weekly_return'] > 0 else 'negative' }}">
-                                        {{ "%.2f"|format(results['returns_analysis']['weekly_return'] * 100) }}%
-                                    </span>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6>Key Technical Metrics</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="metric-item"><span class="metric-label">RSI (14):</span> <span class="metric-value">{{ "%.2f"|format(results.get('price_trends', {}).get('rsi', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">50-Day MA:</span> <span class="metric-value">₹{{ "%.2f"|format(results.get('price_trends', {}).get('ma50', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">200-Day MA:</span> <span class="metric-value">₹{{ "%.2f"|format(results.get('price_trends', {}).get('ma200', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">MACD:</span> <span class="metric-value">{{ "%.2f"|format(results.get('price_trends', {}).get('macd', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Signal Line:</span> <span class="metric-value">{{ "%.2f"|format(results.get('price_trends', {}).get('signal_line', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Upper Bollinger Band:</span> <span class="metric-value">₹{{ "%.2f"|format(results.get('price_trends', {}).get('upper_band', 0)) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Lower Bollinger Band:</span> <span class="metric-value">₹{{ "%.2f"|format(results.get('price_trends', {}).get('lower_band', 0)) }}</span></li>
+                                    </ul>
                                 </div>
-                                <div class="return-metric">
-                                    <span>Average Weekly Volatility</span>
-                                    <span class="volatility">
-                                        {{ "%.2f"|format(results['returns_analysis']['weekly_volatility'] * 100) }}%
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Monthly Returns -->
-                            <div class="period-returns" id="monthly-returns">
-                                <div class="return-metric">
-                                    <span>1 Month Return</span>
-                                    <span class="return-value {{ 'positive' if results['returns_analysis']['monthly_return'] > 0 else 'negative' }}">
-                                        {{ "%.2f"|format(results['returns_analysis']['monthly_return'] * 100) }}%
-                                    </span>
-                                </div>
-                                <div class="return-metric">
-                                    <span>3 Month Return</span>
-                                    <span class="return-value {{ 'positive' if results['returns_analysis']['three_month_return'] > 0 else 'negative' }}">
-                                        {{ "%.2f"|format(results['returns_analysis']['three_month_return'] * 100) }}%
-                                    </span>
-                                </div>
-                                <div class="return-metric">
-                                    <span>6 Month Return</span>
-                                    <span class="return-value {{ 'positive' if results['returns_analysis']['six_month_return'] > 0 else 'negative' }}">
-                                        {{ "%.2f"|format(results['returns_analysis']['six_month_return'] * 100) }}%
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Yearly Returns -->
-                            <div class="period-returns" id="yearly-returns">
-                                <div class="return-metric">
-                                    <span>1 Year Return</span>
-                                    <span class="return-value {{ 'positive' if results['returns_analysis']['yearly_return'] > 0 else 'negative' }}">
-                                        {{ "%.2f"|format(results['returns_analysis']['yearly_return'] * 100) }}%
-                                    </span>
-                                </div>
-                                <div class="return-metric">
-                                    <span>YTD Return</span>
-                                    <span class="return-value {{ 'positive' if results['returns_analysis']['ytd_return'] > 0 else 'negative' }}">
-                                        {{ "%.2f"|format(results['returns_analysis']['ytd_return'] * 100) }}%
-                                    </span>
-                                </div>
-                                <div class="return-metric">
-                                    <span>Maximum Drawdown</span>
-                                    <span class="return-value negative">
-                                        {{ "%.2f"|format(results['returns_analysis']['max_drawdown'] * 100) }}%
-                                    </span>
+                                <div class="col-md-6">
+                                    <h6>Returns Analysis</h6>
+                                    <ul class="list-unstyled">
+                                        <li class="metric-item"><span class="metric-label">1-Day Return:</span> <span class="metric-value {{ 'positive' if results.get('returns_analysis', {}).get('one_day_return', 0) > 0 else 'negative' }}">{{ "%.2f%%"|format(results.get('returns_analysis', {}).get('one_day_return', 0) * 100) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">1-Week Return:</span> <span class="metric-value {{ 'positive' if results.get('returns_analysis', {}).get('weekly_return', 0) > 0 else 'negative' }}">{{ "%.2f%%"|format(results.get('returns_analysis', {}).get('weekly_return', 0) * 100) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">1-Month Return:</span> <span class="metric-value {{ 'positive' if results.get('returns_analysis', {}).get('monthly_return', 0) > 0 else 'negative' }}">{{ "%.2f%%"|format(results.get('returns_analysis', {}).get('monthly_return', 0) * 100) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">1-Year Return:</span> <span class="metric-value {{ 'positive' if results.get('returns_analysis', {}).get('yearly_return', 0) > 0 else 'negative' }}">{{ "%.2f%%"|format(results.get('returns_analysis', {}).get('yearly_return', 0) * 100) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">YTD Return:</span> <span class="metric-value {{ 'positive' if results.get('returns_analysis', {}).get('ytd_return', 0) > 0 else 'negative' }}">{{ "%.2f%%"|format(results.get('returns_analysis', {}).get('ytd_return', 0) * 100) }}</span></li>
+                                        <li class="metric-item"><span class="metric-label">Max Drawdown:</span> <span class="metric-value negative">{{ "%.2f%%"|format(results.get('returns_analysis', {}).get('max_drawdown', 0) * 100) }}</span></li>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Returns Chart -->
-                        <div id="returns-chart" class="returns-chart"></div>
-                    {% else %}
-                        <div class="metric">No returns data available</div>
-                    {% endif %}
-                </div>
-
-                <!-- Price Targets Card -->
-                {% if results.get('future_prospects', {}).get('status') == 'success' and results['future_prospects'].get('price_targets') %}
-                <div class="card">
-                    <h2 class="card-title">Price Targets</h2>
-                    <div class="metric">
-                        <span>Mean Target</span>
-                        <span>₹{{ "%.2f"|format(results['future_prospects']['price_targets']['targetMeanPrice']) }}</span>
-                    </div>
-                    <div class="metric">
-                        <span>High Target</span>
-                        <span>₹{{ "%.2f"|format(results['future_prospects']['price_targets']['targetHighPrice']) }}</span>
-                    </div>
-                    <div class="metric">
-                        <span>Low Target</span>
-                        <span>₹{{ "%.2f"|format(results['future_prospects']['price_targets']['targetLowPrice']) }}</span>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Analysis Summary Card -->
-                {% if results.get('recommendation', {}).get('explanation') %}
-                <div class="card">
-                    <h2 class="card-title">Analysis Summary</h2>
-                    <ul style="list-style: none; padding: 0;">
-                {% for item in results['recommendation']['explanation'] %}
-                            <li class="metric">{{ item }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-                {% endif %}
-
-                <!-- Company Pros and Cons Card -->
-                {% if results.get('pros_and_cons', {}).get('status') == 'success' %}
-                <div class="card pros-cons-section">
-                    <h2 class="pros-cons-title">Investment Analysis</h2>
-                    <div class="pros-cons-grid">
-                        <div class="pros-cons-card pros">
-                            <h3>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" fill="#2e7d32"/>
-                                </svg>
-                                Strengths
-                            </h3>
-                            <ul class="pros-cons-list pros-list">
-                                {% for pro in results.get('pros_and_cons', {}).get('analysis', {}).get('pros', []) %}
-                                <li>{{ pro }}</li>
+                        <!-- News & Sentiment Tab Content -->
+                        <div class="tab-pane fade" id="news" role="tabpanel" aria-labelledby="news-tab">
+                            <h5>Latest News</h5>
+                            {% if results.get('news_articles') %}
+                                {% for article in results.get('news_articles', []) %}
+                                    <div class="news-article">
+                                        <h6 class="news-title"><a href="{{ article.url }}" target="_blank">{{ article.title }}</a></h6>
+                                        <p class="news-meta">{{ article.source }} - {{ article.publishedAt }} 
+                                            <span class="sentiment-badge {{ article.sentiment_classification.lower() }}">
+                                                {{ article.sentiment_classification }} Impact
+                                            </span>
+                                        </p>
+                                        <p>{{ article.description }}</p>
+                                    </div>
                                 {% endfor %}
-                                {% if not results.get('pros_and_cons', {}).get('analysis', {}).get('pros', []) %}
-                                <li>No significant strengths identified</li>
-                                {% endif %}
-                            </ul>
+                            {% else %}
+                                <p>No news articles available.</p>
+                            {% endif %}
                         </div>
-                        <div class="pros-cons-card cons">
-                            <h3>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="#c62828"/>
-                                </svg>
-                                Areas of Concern
-                            </h3>
-                            <ul class="pros-cons-list cons-list">
-                                {% for con in results.get('pros_and_cons', {}).get('analysis', {}).get('cons', []) %}
-                                <li>{{ con }}</li>
-                                {% endfor %}
-                                {% if not results.get('pros_and_cons', {}).get('analysis', {}).get('cons', []) %}
-                                <li>No significant concerns identified</li>
-                                {% endif %}
-                            </ul>
+
+                        <!-- Peer Comparison Tab Content -->
+                        <div class="tab-pane fade" id="peers" role="tabpanel" aria-labelledby="peers-tab">
+                            <h5>Industry Peer Comparison</h5>
+                            {% if results.get('peer_comparison', {}).get('status') == 'success' and results['peer_comparison'].get('peers') %}
+                                <canvas id="peerComparisonChart" class="chart-container"></canvas>
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-striped table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Ticker</th>
+                                                <th>P/E Ratio</th>
+                                                <th>ROE</th>
+                                                <th>Debt to Equity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for peer in results['peer_comparison']['peers'] %}
+                                                <tr>
+                                                    <td>{{ peer.ticker }}</td>
+                                                    <td>{{ "%.2f"|format(peer.pe_ratio) if peer.pe_ratio is not none else 'N/A' }}</td>
+                                                    <td>{{ "%.2f%%"|format(peer.roe * 100) if peer.roe is not none else 'N/A' }}</td>
+                                                    <td>{{ "%.2f"|format(peer.debt_to_equity) if peer.debt_to_equity is not none else 'N/A' }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p>No peer comparison data available.</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
-                {% endif %}
-
             </div>
 
-            <div style="text-align: center;">
-                <a href="/" class="back-button">Analyze Another Stock</a>
+            <div class="text-center mt-4">
+                <a href="/" class="btn btn-primary">Analyze Another Stock</a>
             </div>
 
-            {% if results.get('historical_data') %}
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <script>
-                // Create price chart
-                const priceData = {
-                    x: {{ results['historical_data'].get('dates', [])|tojson }},
-                    y: {{ results['historical_data'].get('prices', [])|tojson }},
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Stock Price',
-                    line: {
-                        color: '#1e3c72',
-                        width: 2
-                    }
-                };
-
-                const layout = {
-                    title: 'Price History',
-                    paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)',
-                    xaxis: {
-                        title: 'Date',
-                        showgrid: false
-                    },
-                    yaxis: {
-                        title: 'Price (₹)',
-                        showgrid: true,
-                        gridcolor: '#f0f2f5'
-                    },
-                    margin: {
-                        l: 50,
-                        r: 20,
-                        t: 40,
-                        b: 40
-                    }
-                };
-
-                Plotly.newPlot('price-chart', [priceData], layout);
-            </script>
-            {% endif %}
-
-            {% if results.get('historical_returns', {}).get('status') == 'success' %}
-            <script>
-                // Store the chart data globally
-                const chartData = {
-                    '1w': {{ results.get('historical_returns', {}).get('chart_data', {}).get('1w', {})|tojson|safe }},
-                    '1m': {{ results.get('historical_returns', {}).get('chart_data', {}).get('1m', {})|tojson|safe }},
-                    '1y': {{ results.get('historical_returns', {}).get('chart_data', {}).get('1y', {})|tojson|safe }},
-                    '5y': {{ results.get('historical_returns', {}).get('chart_data', {}).get('5y', {})|tojson|safe }},
-                    '10y': {{ results.get('historical_returns', {}).get('chart_data', {}).get('10y', {})|tojson|safe }}
-                };
-
-                const returns = {
-                    '1w': {{ results.get('historical_returns', {}).get('returns', {}).get('1w', {})|tojson|safe }},
-                    '1m': {{ results.get('historical_returns', {}).get('returns', {}).get('1m', {})|tojson|safe }},
-                    '1y': {{ results.get('historical_returns', {}).get('returns', {}).get('1y', {})|tojson|safe }},
-                    '5y': {{ results.get('historical_returns', {}).get('returns', {}).get('5y', {})|tojson|safe }},
-                    '10y': {{ results.get('historical_returns', {}).get('returns', {}).get('10y', {})|tojson|safe }}
-                };
-
-                function formatDate(dateStr) {
-                    const date = new Date(dateStr);
-                    return date.toLocaleDateString('en-IN', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                    });
-                }
-
-                function formatPrice(price) {
-                    return new Intl.NumberFormat('en-IN', {
-                        style: 'currency',
-                        currency: 'INR',
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(price);
-                }
-
-                function updateChart(period) {
-                    // Update button states
-                    document.querySelectorAll('.period-button').forEach(button => {
-                        button.classList.remove('active');
-                    });
-                    document.querySelector(`[onclick="updateChart('${period}')"]`).classList.add('active');
-
-                    const data = chartData[period];
-                    const periodReturn = returns[period];
-                    if (!data || !periodReturn) return;
-
-                    // Update date range
-                    const dateRangeElement = document.getElementById('period-date-range');
-                    dateRangeElement.textContent = `${formatDate(periodReturn.start_date)} - ${formatDate(periodReturn.end_date)}`;
-
-                    // Update prices
-                    document.getElementById('start-price').textContent = formatPrice(periodReturn.start_price);
-                    document.getElementById('end-price').textContent = formatPrice(periodReturn.end_price);
-
-                    // Create the price chart
-                    const trace1 = {
-                        x: data.dates,
-                        y: data.prices,
-                        type: 'scatter',
-                        name: 'Price',
-                        line: {
-                            color: '#1e3c72',
-                            width: 2
-                        }
-                    };
-
-                    // Create the returns chart
-                    const trace2 = {
-                        x: data.dates,
-                        y: data.returns.map(r => r * 100),
-                        type: 'scatter',
-                        name: 'Return %',
-                        yaxis: 'y2',
-                        line: {
-                            color: '#2ecc71',
-                            width: 2,
-                            dash: 'dot'
-                        }
-                    };
-
-                    const layout = {
-                        showlegend: true,
-                        legend: {
-                            orientation: 'h',
-                            y: -0.2
-                        },
-                        xaxis: {
-                            title: 'Date',
-                            showgrid: false,
-                            range: [data.dates[0], data.dates[data.dates.length - 1]]
-                        },
-                        yaxis: {
-                            title: 'Price (₹)',
-                            titlefont: {color: '#1e3c72'},
-                            tickfont: {color: '#1e3c72'},
-                            side: 'left'
-                        },
-                        yaxis2: {
-                            title: 'Return %',
-                            titlefont: {color: '#2ecc71'},
-                            tickfont: {color: '#2ecc71'},
-                            overlaying: 'y',
-                            side: 'right'
-                        },
-                        margin: {
-                            l: 60,
-                            r: 60,
-                            t: 20,
-                            b: 50
-                        }
-                    };
-
-                    Plotly.newPlot('stock-chart', [trace1, trace2], layout);
-
-                    // Update return badge
-                    if (periodReturn) {
-                        const returnValue = periodReturn.return * 100;
-                        const returnElement = document.getElementById('period-return');
-                        returnElement.textContent = `${returnValue.toFixed(2)}%`;
-                        returnElement.className = `return-badge ${returnValue >= 0 ? 'positive' : 'negative'}`;
-                    }
-                }
-
-                // Initialize with 1-year chart
                 document.addEventListener('DOMContentLoaded', function() {
-                    updateChart('1y');
-                });
-            </script>
-            {% endif %}
-
-            <script>
-                function openTab(evt, tabName) {
-                    var i, tabcontent, tabbuttons;
-                    
-                    // Hide all tab content
-                    tabcontent = document.getElementsByClassName("tab-content");
-                    for (i = 0; i < tabcontent.length; i++) {
-                        tabcontent[i].style.display = "none";
-                    }
-                    
-                    // Remove active class from all tab buttons
-                    tabbuttons = document.getElementsByClassName("tab-button");
-                    for (i = 0; i < tabbuttons.length; i++) {
-                        tabbuttons[i].className = tabbuttons[i].className.replace(" active", "");
-                    }
-                    
-                    // Show the selected tab and mark its button as active
-                    document.getElementById(tabName).style.display = "block";
-                    evt.currentTarget.className += " active";
-                }
-            </script>
-
-            <script>
-                function showPeriod(period) {
-                    // Hide all period returns
-                    document.querySelectorAll('.period-returns').forEach(el => {
-                        el.classList.remove('active');
-                    });
-                    
-                    // Show selected period returns
-                    document.getElementById(`${period}-returns`).classList.add('active');
-                    
-                    // Update button states
-                    document.querySelectorAll('.time-btn').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    event.target.classList.add('active');
-                    
-                    // Update chart
-                    updateReturnsChart(period);
-                }
-
-                function updateReturnsChart(period) {
-                    const chartData = {
-                        daily: {
-                            x: {{ results.get('returns_analysis', {}).get('daily_dates', [])|tojson|safe }},
-                            y: {{ results.get('returns_analysis', {}).get('daily_prices', [])|tojson|safe }},
-                            name: 'Daily Price'
-                        },
-                        weekly: {
-                            x: {{ results.get('returns_analysis', {}).get('weekly_dates', [])|tojson|safe }},
-                            y: {{ results.get('returns_analysis', {}).get('weekly_prices', [])|tojson|safe }},
-                            name: 'Weekly Price'
-                        },
-                        monthly: {
-                            x: {{ results.get('returns_analysis', {}).get('monthly_dates', [])|tojson|safe }},
-                            y: {{ results.get('returns_analysis', {}).get('monthly_prices', [])|tojson|safe }},
-                            name: 'Monthly Price'
-                        },
-                        yearly: {
-                            x: {{ results.get('returns_analysis', {}).get('yearly_dates', [])|tojson|safe }},
-                            y: {{ results.get('returns_analysis', {}).get('yearly_prices', [])|tojson|safe }},
-                            name: 'Yearly Price'
-                        }
-                    };
-
-                    // Check if we have data to display
-                    if (chartData[period].x.length === 0 || chartData[period].y.length === 0) {
-                        document.getElementById('returns-chart').innerHTML = 'No data available for this period';
-                        return;
+                    // Price Chart
+                    const priceCtx = document.getElementById('priceChart');
+                    if (priceCtx) {
+                        new Chart(priceCtx, {
+                            type: 'line',
+                            data: {
+                                labels: {{ results['historical_returns']['chart_data']['1y']['dates']|tojson|safe }},
+                                datasets: [{
+                                    label: 'Stock Price',
+                                    data: {{ results['historical_returns']['chart_data']['1y']['prices']|tojson|safe }},
+                                    borderColor: '#007bff',
+                                    tension: 0.1,
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: '1-Year Price Movement'
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        type: 'time',
+                                        time: {
+                                            unit: 'month'
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Date'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Price (₹)'
+                                        }
+                                    }
+                                }
+                            }
+                        });
                     }
 
-                    const trace = {
-                        x: chartData[period].x,
-                        y: chartData[period].y,
-                        type: 'scatter',
-                        name: chartData[period].name,
-                        line: {
-                            color: '#1e3c72',
-                            width: 2
-                        }
-                    };
+                    // Returns Chart
+                    const returnsCtx = document.getElementById('returnsChart');
+                    if (returnsCtx) {
+                        new Chart(returnsCtx, {
+                            type: 'line',
+                            data: {
+                                labels: {{ results['historical_returns']['chart_data']['1y']['dates']|tojson|safe }},
+                                datasets: [{
+                                    label: 'Cumulative Return',
+                                    data: {{ results['historical_returns']['chart_data']['1y']['returns']|tojson|safe }}.map(r => r * 100),
+                                    borderColor: '#28a745',
+                                    tension: 0.1,
+                                    fill: false
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: '1-Year Cumulative Return'
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        type: 'time',
+                                        time: {
+                                            unit: 'month'
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Date'
+                                        }
+                                    },
+                                    y: {
+                                        title: {
+                                            display: true,
+                                            text: 'Return (%)'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
 
-                    const layout = {
-                        title: `${period.charAt(0).toUpperCase() + period.slice(1)} Price Movement`,
-                        paper_bgcolor: 'rgba(0,0,0,0)',
-                        plot_bgcolor: 'rgba(0,0,0,0)',
-                        xaxis: {
-                            title: 'Date',
-                            showgrid: false
-                        },
-                        yaxis: {
-                            title: 'Price (₹)',
-                            showgrid: true,
-                            gridcolor: '#f0f2f5'
-                        },
-                        margin: { l: 50, r: 20, t: 40, b: 40 }
-                    };
+                    // Peer Comparison Chart
+                    const peerCtx = document.getElementById('peerComparisonChart');
+                    if (peerCtx && {{ results.get('peer_comparison', {}).get('status') == 'success' and results['peer_comparison'].get('peers')|length > 0 }}) {
+                        const peers = {{ results['peer_comparison']['peers']|tojson|safe }};
+                        const labels = peers.map(p => p.ticker);
+                        const peRatios = peers.map(p => p.pe_ratio);
+                        const roes = peers.map(p => p.roe ? p.roe * 100 : null);
+                        const debtToEquity = peers.map(p => p.debt_to_equity);
 
-                    Plotly.newPlot('returns-chart', [trace], layout);
-                }
-
-                // Initialize chart with daily data
-                document.addEventListener('DOMContentLoaded', () => {
-                    updateReturnsChart('daily');
+                        new Chart(peerCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'P/E Ratio',
+                                        data: peRatios,
+                                        backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                                        borderColor: 'rgba(0, 123, 255, 1)',
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'ROE (%)',
+                                        data: roes,
+                                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                                        borderColor: 'rgba(40, 167, 69, 1)',
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Debt to Equity',
+                                        data: debtToEquity,
+                                        backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                                        borderColor: 'rgba(255, 193, 7, 1)',
+                                        borderWidth: 1
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: 'Peer Comparison: Key Financials'
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Value'
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    }
                 });
             </script>
         {% endif %}
     </div>
-
-    <!-- Full Width News Section -->
-    {% if results.get('news_articles') %}
-    <div class="news-section">
-        <div class="section-header">
-            <h2>Latest Company News & Updates</h2>
-        </div>
-        <div class="news-container">
-            {% for article in results.get('news_articles', []) %}
-                <div class="news-article">
-                    <div class="news-header">
-                        <div class="news-meta">
-                            <span class="news-source">{{ article.source }}</span>
-                            <span class="news-date">{{ article.publishedAt }}</span>
-                        </div>
-                        <div class="sentiment-info">
-                            {% if article.sentiment_classification == 'positive' %}
-                                <span class="sentiment-badge positive" title="Sentiment Score: {{ "%.2f"|format(article.sentiment) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M12 20V10m0 0l-4 4m4-4l4 4"/>
-                                    </svg>
-                                    Positive Impact
-                                </span>
-                            {% elif article.sentiment_classification == 'negative' %}
-                                <span class="sentiment-badge negative" title="Sentiment Score: {{ "%.2f"|format(article.sentiment) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M12 4v10m0 0l4-4m-4 4l-4-4"/>
-                                    </svg>
-                                    Negative Impact
-                                </span>
-                            {% else %}
-                                <span class="sentiment-badge neutral" title="Sentiment Score: {{ "%.2f"|format(article.sentiment) }}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <line x1="5" y1="12" x2="19" y2="12"/>
-                                    </svg>
-                                    Neutral Impact
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="news-content">
-                        {% if article.urlToImage %}
-                            <img src="{{ article.urlToImage }}" alt="News Image" class="news-image">
-                        {% endif %}
-                        <div class="news-text">
-                            <h3 class="news-title">
-                                <a href="{{ article.url }}" target="_blank" rel="noopener">{{ article.title }}</a>
-                            </h3>
-                            <p class="news-description">{{ article.description }}</p>
-                            <div class="news-footer">
-                                <a href="{{ article.url }}" target="_blank" rel="noopener" class="read-more-btn">
-                                    Read more on {{ article.source }}
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                                        <polyline points="12 5 19 12 12 19"></polyline>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 </body>
 </html>

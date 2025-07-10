@@ -4,8 +4,10 @@ import os
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
+
 import yfinance as yf
 import requests
 import csv
@@ -16,7 +18,7 @@ load_dotenv()
 
 # Use environment variables
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
-ALPHA_VANTAGE_API_KEY = "016ZW80FI5QY6PCI"  # Added Alpha Vantage API key
+
 DEFAULT_LANGUAGE = os.getenv("DEFAULT_LANGUAGE", "en")
 DEFAULT_NUM_ARTICLES = int(os.getenv("DEFAULT_NUM_ARTICLES", 5))
 
@@ -25,6 +27,8 @@ try:
     nltk.data.find('vader_lexicon')
 except LookupError:
     nltk.download('vader_lexicon')
+
+
 
 app = Flask(__name__)
 
@@ -58,6 +62,7 @@ class IndianStockAnalyzer:
         """
         self.ticker = ticker
         self.sentiment_analyzer = SentimentIntensityAnalyzer()
+        
         self.analysis_results = {}
         self.recommendation = None
         self.confidence = None
@@ -200,6 +205,19 @@ class IndianStockAnalyzer:
         # Calculate total return
         total_return = (hist_data['Close'].iloc[-1] / hist_data['Close'].iloc[0]) - 1
         
+        # Calculate MACD
+        exp1 = hist_data['Close'].ewm(span=12, adjust=False).mean()
+        exp2 = hist_data['Close'].ewm(span=26, adjust=False).mean()
+        macd = exp1 - exp2
+        signal = macd.ewm(span=9, adjust=False).mean()
+        hist_data['MACD'] = macd
+        hist_data['Signal_Line'] = signal
+
+        # Calculate Bollinger Bands
+        hist_data['20_MA'] = hist_data['Close'].rolling(window=20).mean()
+        hist_data['Upper_Band'] = hist_data['20_MA'] + (hist_data['Close'].rolling(window=20).std() * 2)
+        hist_data['Lower_Band'] = hist_data['20_MA'] - (hist_data['Close'].rolling(window=20).std() * 2)
+
         # Check if stock is in a bullish trend (50-day MA > 200-day MA)
         latest_data = hist_data.iloc[-1]
         bullish_trend = latest_data['MA50'] > latest_data['MA200']
@@ -222,7 +240,11 @@ class IndianStockAnalyzer:
             "current_price": latest_data['Close'],
             "rsi": current_rsi,
             "ma50": latest_data['MA50'],
-            "ma200": latest_data['MA200']
+            "ma200": latest_data['MA200'],
+            "macd": latest_data['MACD'],
+            "signal_line": latest_data['Signal_Line'],
+            "upper_band": latest_data['Upper_Band'],
+            "lower_band": latest_data['Lower_Band']
         }
         
         return results
@@ -511,6 +533,84 @@ class IndianStockAnalyzer:
                 "message": f"Error analyzing pros and cons: {str(e)}"
             }
 
+    def analyze_peer_comparison(self):
+        """Analyze how the stock compares to its industry peers."""
+        try:
+            stock = yf.Ticker(self.ticker)
+            info = stock.info
+            industry = info.get('industry')
+            if not industry:
+                return {"status": "error", "message": "Industry information not available."}
+
+            # This is a simplified peer finding logic.
+            # A more robust implementation would use a pre-compiled list of companies by industry.
+            all_stocks = fetch_all_stocks()
+            peers = [s['symbol'] for s in all_stocks if yf.Ticker(s['symbol'] + '.NS').info.get('industry') == industry and s['symbol'] != self.ticker.replace('.NS', '')][:5]
+
+            peer_data = []
+            for peer_ticker in peers:
+                try:
+                    peer_stock = yf.Ticker(peer_ticker + '.NS')
+                    peer_info = peer_stock.info
+                    peer_data.append({
+                        'ticker': peer_ticker,
+                        'pe_ratio': peer_info.get('trailingPE'),
+                        'roe': peer_info.get('returnOnEquity'),
+                        'debt_to_equity': peer_info.get('debtToEquity')
+                    })
+                except Exception as e:
+                    print(f"Could not fetch data for peer {peer_ticker}: {e}")
+
+            return {"status": "success", "peers": peer_data}
+        except Exception as e:
+            return {"status": "error", "message": f"Error in peer comparison: {str(e)}"}
+
+    def get_factor_scores(self):
+        """Calculate scores for different factors like value, growth, quality, and momentum."""
+        try:
+            financial_metrics = self.analysis_results['financial_metrics']['metrics']
+            price_trends = self.analysis_results['price_trends']
+
+            # Value Score
+            pe_ratio = financial_metrics.get('pe_ratio', 0)
+            pb_ratio = financial_metrics.get('pb_ratio', 0)
+            value_score = 0
+            if pe_ratio > 0 and pe_ratio < 20: value_score += 1
+            if pb_ratio > 0 and pb_ratio < 3: value_score += 1
+
+            # Growth Score
+            revenue_growth = financial_metrics.get('revenue_growth', 0)
+            eps_growth = financial_metrics.get('eps', 0) # Simplified, should be growth rate
+            growth_score = 0
+            if revenue_growth > 0.1: growth_score += 1
+            if eps_growth > 0.1: growth_score += 1
+
+            # Quality Score
+            roe = financial_metrics.get('roe', 0)
+            debt_to_equity = financial_metrics.get('debt_to_equity', 0)
+            quality_score = 0
+            if roe > 0.15: quality_score += 1
+            if debt_to_equity < 1: quality_score += 1
+
+            # Momentum Score
+            rsi = price_trends.get('rsi', 0)
+            macd = price_trends.get('macd', 0)
+            momentum_score = 0
+            if rsi > 50: momentum_score += 1
+            if macd > 0: momentum_score += 1
+
+            return {
+                "status": "success",
+                "scores": {
+                    "value": value_score,
+                    "growth": growth_score,
+                    "quality": quality_score,
+                    "momentum": momentum_score
+                }
+            }
+        except Exception as e:
+            return {"status": "error", "message": f"Error in factor scoring: {str(e)}"}
+
     def run_analysis(self):
         """Run all analyses and generate a recommendation"""
         print(f"Analyzing {self.ticker}...")
@@ -523,6 +623,10 @@ class IndianStockAnalyzer:
         historical_returns = self.get_period_returns()
         self.analysis_results['historical_returns'] = historical_returns
         
+        # Analyze peer comparison
+        peer_comparison_results = self.analyze_peer_comparison()
+        self.analysis_results['peer_comparison'] = peer_comparison_results
+
         # Analyze pros and cons
         pros_and_cons = self.analyze_pros_and_cons()
         self.analysis_results['pros_and_cons'] = pros_and_cons
@@ -572,6 +676,10 @@ class IndianStockAnalyzer:
                 new_confidence = (current_confidence * (1 - pe_weight)) + (pe_score * 100 * pe_weight)
                 self.analysis_results['recommendation']['confidence'] = new_confidence
         
+        # Get factor scores
+        factor_scores = self.get_factor_scores()
+        self.analysis_results['factor_scores'] = factor_scores
+
         # Generate recommendation
         self.generate_recommendation()
         
@@ -666,11 +774,11 @@ class IndianStockAnalyzer:
             
             # Compound sentiment score (up to 30 points)
             compound_sentiment = news_sentiment['avg_sentiment']['compound']
-            if (compound_sentiment > 0.05):
+            if (compound_sentiment > 0.2):
                 score += 30
                 explanation.append(f"Positive news sentiment ({compound_sentiment:.2f})")
-            elif (compound_sentiment > -0.05):
-                score += 20
+            elif (compound_sentiment > -0.2):
+                score += 15
                 explanation.append(f"Neutral news sentiment ({compound_sentiment:.2f})")
             else:
                 explanation.append(f"Negative news sentiment ({compound_sentiment:.2f})")
@@ -1119,26 +1227,25 @@ def get_fundamental_metrics(ticker):
 
 def fetch_all_stocks():
     """
-    Fetch all active stock listings using the Alpha Vantage API.
+    Fetch all active stock listings from the NSE website.
     Returns a list of dictionaries containing stock symbols and names.
     """
     try:
-        url = f"https://www.alphavantage.co/query?function=LISTING_STATUS&apikey={ALPHA_VANTAGE_API_KEY}"
-        response = requests.get(url)
+        url = 'https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv'
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
         response.raise_for_status()
-        csv_text = response.text
-        reader = csv.DictReader(StringIO(csv_text))
-        stocks = []
-        for row in reader:
-            # Only include active listings
-            if row.get("status", "").lower() == "active":
-                stocks.append({
-                    "symbol": row.get("symbol"),
-                    "name": row.get("name")
-                })
-        return stocks
+        csv_file = StringIO(response.content.decode('utf-8'))
+        df_stocks = pd.read_csv(csv_file)
+        # Rename columns to be consistent with the old format
+        df_stocks = df_stocks.rename(columns={'SYMBOL': 'symbol', 'NAME OF COMPANY': 'name'})
+        # Filter for equity series
+        df_stocks = df_stocks[df_stocks['SERIES'] == 'EQ']
+        return df_stocks[['symbol', 'name']].to_dict('records')
     except Exception as e:
-        print(f"Error fetching stock listings: {str(e)}")
+        print(f"Error fetching stock listings from NSE: {str(e)}")
         return []
 
 @app.route("/all_stocks")
@@ -1148,4 +1255,8 @@ def all_stocks():
     return render_template("all_stocks.html", stocks=stocks)
 
 if __name__ == "__main__":
+    # For local development
     app.run(debug=True, port=5000)
+else:
+    # For production deployment
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
