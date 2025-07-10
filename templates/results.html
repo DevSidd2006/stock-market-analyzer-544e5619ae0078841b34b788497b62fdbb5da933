@@ -366,16 +366,16 @@
             <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    // Price Chart
                     const priceCtx = document.getElementById('priceChart');
-                    if (priceCtx) {
+                    const chartData = {{ results.get('historical_returns', {}).get('chart_data', {}).get('1y', {})|tojson|safe }};
+                    if (priceCtx && chartData && chartData.dates && chartData.dates.length > 0) {
                         new Chart(priceCtx, {
                             type: 'line',
                             data: {
-                                labels: {{ results['historical_returns']['chart_data']['1y']['dates']|tojson|safe }},
+                                labels: chartData.dates || [],
                                 datasets: [{
                                     label: 'Stock Price',
-                                    data: {{ results['historical_returns']['chart_data']['1y']['prices']|tojson|safe }},
+                                    data: chartData.prices || [],
                                     borderColor: '#007bff',
                                     tension: 0.1,
                                     fill: false
@@ -392,10 +392,6 @@
                                 },
                                 scales: {
                                     x: {
-                                        type: 'time',
-                                        time: {
-                                            unit: 'month'
-                                        },
                                         title: {
                                             display: true,
                                             text: 'Date'
@@ -414,14 +410,15 @@
 
                     // Returns Chart
                     const returnsCtx = document.getElementById('returnsChart');
-                    if (returnsCtx) {
+                    if (returnsCtx && chartData && chartData.dates && chartData.dates.length > 0) {
+                        const returnsData = (chartData.returns || []).map(r => r * 100);
                         new Chart(returnsCtx, {
                             type: 'line',
                             data: {
-                                labels: {{ results['historical_returns']['chart_data']['1y']['dates']|tojson|safe }},
+                                labels: chartData.dates || [],
                                 datasets: [{
                                     label: 'Cumulative Return',
-                                    data: {{ results['historical_returns']['chart_data']['1y']['returns']|tojson|safe }}.map(r => r * 100),
+                                    data: returnsData,
                                     borderColor: '#28a745',
                                     tension: 0.1,
                                     fill: false
@@ -436,32 +433,31 @@
                                         text: '1-Year Cumulative Return'
                                     }
                                 },
-                                scales: {
-                                    x: {
-                                        type: 'time',
-                                        time: {
-                                            unit: 'month'
-                                        },
-                                        title: {
-                                            display: true,
-                                            text: 'Date'
+                                            scales: {
+                                                x: {
+                                                    title: {
+                                                        display: true,
+                                                        text: 'Date'
+                                                    }
+                                                },
+                                                y: {
+                                                    title: {
+                                                        display: true,
+                                                        text: 'Return (%)'
+                                                    }
+                                                }
+                                            }
                                         }
-                                    },
-                                    y: {
-                                        title: {
-                                            display: true,
-                                            text: 'Return (%)'
-                                        }
-                                    }
+                                    });
                                 }
-                            }
-                        });
-                    }
-
                     // Peer Comparison Chart
+                    
                     const peerCtx = document.getElementById('peerComparisonChart');
-                    if (peerCtx && {{ results.get('peer_comparison', {}).get('status') == 'success' and results['peer_comparison'].get('peers')|length > 0 }}) {
-                        const peers = {{ results['peer_comparison']['peers']|tojson|safe }};
+                    const peerData = {{ results.get('peer_comparison', {}).get('peers', []) | tojson | safe }};
+                    const hasPeerData = {% if results.get('peer_comparison', {}).get('status') == 'success' and results.get('peer_comparison', {}).get('peers', []) %}true{% else %}false{% endif %};
+
+                    if (peerCtx && hasPeerData && peerData.length > 0) {
+                        const peers = peerData;
                         const labels = peers.map(p => p.ticker);
                         const peRatios = peers.map(p => p.pe_ratio);
                         const roes = peers.map(p => p.roe ? p.roe * 100 : null);
