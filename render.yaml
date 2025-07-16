@@ -2,11 +2,13 @@ services:
   - type: web
     name: stock-market-analyzer
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
-        value: 3.9.16
+        value: 3.12.0
       - key: NEWS_API_KEY
         sync: false
       - key: DEFAULT_LANGUAGE

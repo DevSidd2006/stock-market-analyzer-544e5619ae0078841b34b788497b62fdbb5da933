@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import pandas as pd
@@ -31,6 +32,9 @@ except LookupError:
 
 
 app = Flask(__name__)
+
+# Enable CORS for all routes
+CORS(app)
 
 # Add this template filter before your routes
 @app.template_filter()
@@ -1253,6 +1257,61 @@ def all_stocks():
     """Display all stocks fetched via Alpha Vantage API."""
     stocks = fetch_all_stocks()
     return render_template("all_stocks.html", stocks=stocks)
+
+@app.route("/api/analyze", methods=['POST'])
+def api_analyze():
+    """API endpoint for stock analysis that returns JSON"""
+    try:
+        data = request.get_json()
+        ticker = data.get('ticker') if data else request.form.get('ticker')
+        
+        if not ticker:
+            return jsonify({"error": "Ticker symbol is required"}), 400
+        
+        # Get returns analysis
+        returns_analysis = calculate_returns_analysis(ticker)
+        
+        # Get other analyses
+        analyzer = IndianStockAnalyzer(ticker)
+        results = analyzer.run_analysis()
+        
+        # Combine all analyses
+        results['returns_analysis'] = returns_analysis
+        results['ticker'] = ticker
+        
+        # Fetch news articles
+        news_articles = fetch_company_news(ticker)
+        results['news_articles'] = news_articles
+        
+        # Add fundamental metrics from Yahoo Finance
+        fundamental_metrics = get_fundamental_metrics(ticker)
+        results['fundamental_metrics'] = fundamental_metrics
+
+        # Fetch additional data from Alpha Vantage and add to results 
+        alpha_vantage_data = fetch_alpha_vantage_data(ticker)
+        results['alpha_vantage_data'] = alpha_vantage_data
+        
+        # Ensure all required sections exist with proper structure
+        if ('price_trends' not in results):
+            results['price_trends'] = {'status': 'error'}
+        if ('news_sentiment' not in results):
+            results['news_sentiment'] = {'status': 'error'}
+        if ('recommendation' not in results):
+            results['recommendation'] = {
+                'recommendation': 'Unknown',
+                'confidence': 0,
+                'explanation': ['Insufficient data for analysis']
+            }
+        
+        return jsonify(results)
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/health")
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({"status": "healthy", "message": "Stock Market Analyzer is running"})
 
 if __name__ == "__main__":
     # For local development
