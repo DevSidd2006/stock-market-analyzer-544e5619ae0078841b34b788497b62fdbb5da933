@@ -32,5 +32,5 @@ USER appuser
 # Expose port
 EXPOSE 5000
 
-# Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "app:app"]
+# Command to run the application  
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --timeout 120 app:app"]
